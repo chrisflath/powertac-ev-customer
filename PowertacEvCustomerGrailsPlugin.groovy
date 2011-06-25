@@ -12,15 +12,15 @@ class PowertacEvCustomerGrailsPlugin {
   ]
 
   // TODO Fill in these fields
-  def author = "Your name"
+  def author = "David Dauer"
   def authorEmail = ""
-  def title = "Plugin summary/headline"
+  def title = "Electic Vehicle Customer Model for Power TAC"
   def description = '''\\
-Brief description of the plugin.
+Electic Vehicle Customer Model for Power TAC
 '''
 
   // URL to the plugin's documentation
-  def documentation = "http://grails.org/plugin/powertac-ev-customer"
+  def documentation = "http://powertac.org/plugin/powertac-ev-customer"
 
   def doWithWebDescriptor = { xml ->
     // TODO Implement additions to web.xml (optional), this event occurs before
