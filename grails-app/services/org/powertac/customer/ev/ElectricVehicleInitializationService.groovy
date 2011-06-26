@@ -28,4 +28,12 @@ class ElectricVehicleInitializationService implements InitializationService {
     electricVehicleService.init()
     return 'ElectricVehicle'
   }
+
+  void setEvalulationFlatDefaultTariff() {
+
+  }
+
+  void setEvaluationHourlyRateTariff(){
+
+  }
 }

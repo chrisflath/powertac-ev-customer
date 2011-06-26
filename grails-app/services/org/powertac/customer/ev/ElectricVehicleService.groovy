@@ -12,6 +12,8 @@ class ElectricVehicleService {
 
   def init() {
     ElectricVehicle ev = new ElectricVehicle()
+
+    // Find and set config
     ev.config = PluginConfig.findByRoleName("ElectricVehicle")
 
     // Create customer info
