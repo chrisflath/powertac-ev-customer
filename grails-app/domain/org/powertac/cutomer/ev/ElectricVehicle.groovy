@@ -11,6 +11,8 @@ import org.powertac.common.Competition
 class ElectricVehicle extends AbstractCustomer {
 
   PluginConfig config
+  // Inject service to get access to tariff rates (for evaluation purposes only)
+  def electricVehicleInitializationService
 
   static hasMany = [timeslots: ElectricVehicleTimeslot]
 
@@ -111,6 +113,7 @@ class ElectricVehicle extends AbstractCustomer {
   def performImmediateLoadingStrategy() {
     // iterate over all timeslots
     def allTimeslots = ElectricVehicleTimeslot.getAll()
+    def hourlyRates = electricVehicleInitializationService.hourlyRateTariffRates()
     allTimeslots.eachWithIndex { ts, i ->
       // No need to calc the needed amount for the first timeslot since we assune we're fully charged
       if (i != 0) {
@@ -132,20 +135,31 @@ class ElectricVehicle extends AbstractCustomer {
         ts.stateOfCharge = stateOfCharge
         ts.energyDemand = consumption
 
+        // calc costs
+        def rate = hourlyRates.get(ts.dateTime.getHourOfDay()) as BigDecimal
+        ts.estimatedCost = consumption * rate
       }
     }
 
     // Debugging, log for xls
-    ElectricVehicleTimeslot.getAll().each { ts ->
-      // 4 times because driving profile is 4 times more accurate
-      4.times {
+    ElectricVehicleTimeslot.getAll().eachWithIndex { ts, i ->
+      // debug: 4 times because driving profile is 4 times more accurate
+      1.times {
+        print i
+        print '\t'
+        print ts.dateTime
+        print '\t'
         print ts.atHome
         print '\t'
         print ts.km
         print '\t'
         print ts.stateOfCharge
         print '\t'
-        println ts.energyDemand
+        print ts.energyDemand
+        print '\t'
+        print ts.estimatedCost
+        print '\t'
+        println electricVehicleInitializationService.hourlyRateTariffRates().get(ts.dateTime.getHourOfDay()) as BigDecimal
       }
     }
   }

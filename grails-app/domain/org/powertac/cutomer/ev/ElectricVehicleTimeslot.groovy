@@ -14,6 +14,7 @@ class ElectricVehicleTimeslot {
 
   BigDecimal stateOfCharge // kWh
   BigDecimal energyDemand // kWh
+  BigDecimal estimatedCost // EUR
 
   static belongsTo = [electricVehicle: ElectricVehicle]
 
@@ -27,5 +28,6 @@ class ElectricVehicleTimeslot {
     // These values are set later, so they need to be nullable at object creation
     stateOfCharge(nullable: true, scale: 8)
     energyDemand(nullable: true, scale: 8)
+    estimatedCost(nullable: true, scale: 2)
   }
 }
