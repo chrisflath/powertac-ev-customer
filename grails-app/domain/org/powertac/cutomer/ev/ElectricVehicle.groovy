@@ -138,6 +138,8 @@ class ElectricVehicle extends AbstractCustomer {
         // calc costs
         def rate = hourlyRates.get(ts.dateTime.getHourOfDay()) as BigDecimal
         ts.estimatedCost = consumption * rate
+
+        ts.save()
       }
     }
 
@@ -173,10 +175,10 @@ class ElectricVehicle extends AbstractCustomer {
       def capacity = config?.configuration?.capacity_kwh as BigDecimal // C
       def chargingTime = config?.configuration?.requiredChargingHours as BigDecimal // v
       def efficiency = config?.configuration?.batteryEfficiency as BigDecimal // eta
-      def maxLoadingAmountPerTimeslot = (capacity / (chargingTime * efficiency)) // C/v
+      def maxLoadingAmountPerTimeslot = (capacity / (chargingTime * efficiency)) // C/(v*eta)
 
       // We can't charge the full amount per timeslot, so determine how much we actually can
-      if ((oldStateOfCharge + maxLoadingAmountPerTimeslot) > maxLoadingAmountPerTimeslot) {
+      if ((oldStateOfCharge + maxLoadingAmountPerTimeslot) > capacity) {
         return ((capacity - oldStateOfCharge) / maxLoadingAmountPerTimeslot)
       } else {
         // We actually can load the maximum possible amount
