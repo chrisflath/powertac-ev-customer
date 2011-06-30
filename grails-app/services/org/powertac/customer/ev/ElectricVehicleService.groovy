@@ -31,6 +31,9 @@ class ElectricVehicleService {
       ev.errors.allErrors.each { log.error it }
     }
 
+    // load data
+    ev.loadData()
+
     //log.error ElectricVehicle.getAll()
   }
 }

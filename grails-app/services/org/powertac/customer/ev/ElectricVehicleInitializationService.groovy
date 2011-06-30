@@ -15,6 +15,9 @@ class ElectricVehicleInitializationService implements InitializationService {
     // Create plugin config
     PluginConfig config = new PluginConfig(roleName: 'ElectricVehicle',
         configuration: [key: 'value', key2: 'value2']).save()
+
+    // Debug
+    electricVehicleService.init()
   }
 
   String initialize(Competition competition, List<String> completedInits) {
