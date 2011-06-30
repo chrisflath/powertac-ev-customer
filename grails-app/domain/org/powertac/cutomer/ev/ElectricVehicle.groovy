@@ -8,6 +8,8 @@ class ElectricVehicle extends AbstractCustomer {
 
   PluginConfig config
 
+  static hasMany = [timeslots: ElectricVehicleTimeslot]
+
   static constraints = {
     config(nullable: false)
   }
@@ -19,11 +21,14 @@ class ElectricVehicle extends AbstractCustomer {
   }
 
   def loadData = {
+    // Load generated driving profile
     CSVReader reader = new CSVReader(new FileReader("/Users/ddauer/Desktop/Profiles/Employee/Profile0.csv"));
-    String [] nextLine;
+    String[] nextLine;
     while ((nextLine = reader.readNext()) != null) {
-        // nextLine[] is an array of values from the line
-        System.out.println(nextLine[0] + nextLine[1] + "etc...");
+      // Skip first line (header)
+      if (nextLine[0] == "ID") { continue }
+
+      System.out.println(nextLine[0] + nextLine[1] + "etc...");
     }
 
 
