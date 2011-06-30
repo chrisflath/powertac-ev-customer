@@ -11,26 +11,17 @@ import org.powertac.common.Competition
 class ElectricVehicle extends AbstractCustomer {
 
   PluginConfig config
-  BigDecimal stateOfCharge // kWh
 
   static hasMany = [timeslots: ElectricVehicleTimeslot]
 
   static constraints = {
     config(nullable: false)
-    stateOfCharge(nullable: false)
   }
 
   @Override
   void step() {
     super.step()
     log.error "some step here"
-  }
-
-  @Override
-  void init() {
-    super.init()
-    // Set stateOfCharge to fully loaded
-    stateOfCharge = config?.configuration?.capacity_kwh as BigDecimal
   }
 
   // Load the driving profile
@@ -88,6 +79,7 @@ class ElectricVehicle extends AbstractCustomer {
           currentTimeslot.atHome = (tripType == "NoTrip")
           currentTimeslot.driving = (tripType != "NoTrip")
           currentTimeslot.charging = false
+          currentTimeslot.stateOfCharge = config?.configuration?.capacity_kwh as BigDecimal
           currentTimeslot.save()
           this.addToTimeslots(currentTimeslot)
         }

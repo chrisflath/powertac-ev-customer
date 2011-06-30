@@ -12,6 +12,8 @@ class ElectricVehicleTimeslot {
   BigDecimal km = new BigDecimal(0.0)
   String trip
 
+  BigDecimal stateOfCharge // kWh
+
   static belongsTo = [electricVehicle: ElectricVehicle]
 
   static constraints = {
@@ -21,5 +23,6 @@ class ElectricVehicleTimeslot {
     charging(nullable: false)
     km(nullable: false)
     trip(nullable: false)
+    stateOfCharge(nullable: false)
   }
 }
