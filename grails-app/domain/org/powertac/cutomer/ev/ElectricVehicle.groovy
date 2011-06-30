@@ -25,7 +25,7 @@ class ElectricVehicle extends AbstractCustomer {
   }
 
   // Load the driving profile
-  def loadData = {
+  def loadData() {
     DateTime competitionBaseTime
     //competitionBaseTime = Competition.currentCompetition().simulationBaseTime.toDateTime()
     // Assume Mon, 2011/07/04 for evaluation purposes
@@ -106,18 +106,72 @@ class ElectricVehicle extends AbstractCustomer {
       previousLine = nextLine
       previousTimeslot = currentTimeslot
     }
+  }
 
+  def performImmediateLoadingStrategy() {
+    // iterate over all timeslots
+    def allTimeslots = ElectricVehicleTimeslot.getAll()
+    allTimeslots.eachWithIndex { ts, i ->
+      // No need to calc the needed amount for the first timeslot since we assune we're fully charged
+      if (i != 0) {
+        // g(t)
+        def loadingPercentage = calcLoadingPercentage(ts, allTimeslots.get(i - 1))
+        // SOC(t)
+        def capacity = config?.configuration?.capacity_kwh as BigDecimal // C
+        def chargingTime = config?.configuration?.requiredChargingHours as BigDecimal // v
+        def efficiency = config?.configuration?.batteryEfficiency as BigDecimal // eta
+        def avgConsumption = config?.configuration?.avgConsumption as BigDecimal // PC in kWh/km
+        def maxLoadingAmountPerTimeslot = (capacity / (chargingTime * efficiency)) // C/v
+
+        def lastStateOfCharge = allTimeslots.get(i - 1).stateOfCharge /* SOC(t-1) */
+        def consumption = (maxLoadingAmountPerTimeslot * loadingPercentage) /* consumption */
+        def demand = ts.km * avgConsumption
+        def stateOfCharge = lastStateOfCharge + consumption - demand
+
+        // finally save soc
+        ts.stateOfCharge = stateOfCharge
+        ts.energyDemand = consumption
+
+      }
+    }
+
+    // Debugging, log for xls
     ElectricVehicleTimeslot.getAll().each { ts ->
+      // 4 times because driving profile is 4 times more accurate
       4.times {
         print ts.atHome
         print '\t'
-        print ts.driving
+        print ts.km
         print '\t'
-        println ts.km
+        print ts.stateOfCharge
+        print '\t'
+        println ts.energyDemand
+      }
+    }
+  }
+
+  // Calculate how much should be loaded (0..1) // g(t)
+  def calcLoadingPercentage(ElectricVehicleTimeslot currentTimeslot, ElectricVehicleTimeslot previousTimeslot) {
+    // We assume that we can only load at home
+    if (currentTimeslot.atHome) {
+
+      def oldStateOfCharge = previousTimeslot.stateOfCharge // SOC(t-1)
+      def capacity = config?.configuration?.capacity_kwh as BigDecimal // C
+      def chargingTime = config?.configuration?.requiredChargingHours as BigDecimal // v
+      def efficiency = config?.configuration?.batteryEfficiency as BigDecimal // eta
+      def maxLoadingAmountPerTimeslot = (capacity / (chargingTime * efficiency)) // C/v
+
+      // We can't charge the full amount per timeslot, so determine how much we actually can
+      if ((oldStateOfCharge + maxLoadingAmountPerTimeslot) > maxLoadingAmountPerTimeslot) {
+        return ((capacity - oldStateOfCharge) / maxLoadingAmountPerTimeslot)
+      } else {
+        // We actually can load the maximum possible amount
+        return new BigDecimal(1.0)
       }
 
+    } else {
+      return new BigDecimal(0.0)
     }
-
   }
 
 }

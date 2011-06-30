@@ -33,6 +33,7 @@ class ElectricVehicleService {
 
     // load data
     ev.loadData()
+    ev.performImmediateLoadingStrategy()
 
     //log.error ElectricVehicle.getAll()
   }

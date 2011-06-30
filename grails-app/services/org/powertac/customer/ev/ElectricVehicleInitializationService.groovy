@@ -14,8 +14,8 @@ class ElectricVehicleInitializationService implements InitializationService {
     // At simulator startup
 
     // Car-specific data
-    def BMWData = [capacity_kwh: "35.0", requiredChargingHours: "3.0", batteryEfficiency : "0.93"]
-    def thinkCityData = [capacity_kwh: "28.3", requiredChargingHours: "13.0", batteryEfficiency : "0.93"]
+    def BMWData = [capacity_kwh: "35.0", requiredChargingHours: "3.0", batteryEfficiency: "0.93", avgConsumption: "0.14"]
+    def thinkCityData = [capacity_kwh: "28.3", requiredChargingHours: "13.0", batteryEfficiency: "0.93", avgConsumption: "0.16"]
 
     // Create plugin config
     PluginConfig config = new PluginConfig(roleName: 'ElectricVehicle',
@@ -41,7 +41,7 @@ class ElectricVehicleInitializationService implements InitializationService {
 
   }
 
-  void setEvaluationHourlyRateTariff(){
+  void setEvaluationHourlyRateTariff() {
 
   }
 }

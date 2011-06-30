@@ -13,6 +13,7 @@ class ElectricVehicleTimeslot {
   String trip
 
   BigDecimal stateOfCharge // kWh
+  BigDecimal energyDemand // kWh
 
   static belongsTo = [electricVehicle: ElectricVehicle]
 
@@ -23,6 +24,8 @@ class ElectricVehicleTimeslot {
     charging(nullable: false)
     km(nullable: false)
     trip(nullable: false)
-    stateOfCharge(nullable: false)
+    // These values are set later, so they need to be nullable at object creation
+    stateOfCharge(nullable: true, scale: 8)
+    energyDemand(nullable: true, scale: 8)
   }
 }
