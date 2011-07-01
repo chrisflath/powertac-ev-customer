@@ -110,7 +110,7 @@ class ElectricVehicle extends AbstractCustomer {
     }
   }
 
-  def performImmediateLoadingStrategy() {
+  def performImmediateCharging() {
     // iterate over all timeslots
     def allTimeslots = ElectricVehicleTimeslot.getAll()
     def hourlyRates = electricVehicleInitializationService.hourlyRateTariffRates()
@@ -143,27 +143,7 @@ class ElectricVehicle extends AbstractCustomer {
       }
     }
 
-    // Debugging, log for xls
-    ElectricVehicleTimeslot.getAll().eachWithIndex { ts, i ->
-      // debug: 4 times because driving profile is 4 times more accurate
-      1.times {
-        print i
-        print '\t'
-        print ts.dateTime
-        print '\t'
-        print ts.atHome
-        print '\t'
-        print ts.km
-        print '\t'
-        print ts.stateOfCharge
-        print '\t'
-        print ts.energyDemand
-        print '\t'
-        print ts.estimatedCost
-        print '\t'
-        println electricVehicleInitializationService.hourlyRateTariffRates().get(ts.dateTime.getHourOfDay()) as BigDecimal
-      }
-    }
+    printTimeslotsForEvaluation()
   }
 
   // Calculate how much should be loaded (0..1) // g(t)
@@ -187,6 +167,35 @@ class ElectricVehicle extends AbstractCustomer {
 
     } else {
       return new BigDecimal(0.0)
+    }
+  }
+
+
+  def performSmartCharging() {
+
+  }
+
+  def printTimeslotsForEvaluation() {
+    // Debugging, log for xls
+    ElectricVehicleTimeslot.getAll().eachWithIndex { ts, i ->
+      // debug: 4 times because driving profile is 4 times more accurate
+      1.times {
+        print i
+        print '\t'
+        print ts.dateTime
+        print '\t'
+        print ts.atHome
+        print '\t'
+        print ts.km
+        print '\t'
+        print ts.stateOfCharge
+        print '\t'
+        print ts.energyDemand
+        print '\t'
+        print ts.estimatedCost
+        print '\t'
+        println electricVehicleInitializationService.hourlyRateTariffRates().get(ts.dateTime.getHourOfDay()) as BigDecimal
+      }
     }
   }
 

@@ -19,7 +19,7 @@ class ElectricVehicleInitializationService implements InitializationService {
 
     // Create plugin config
     PluginConfig config = new PluginConfig(roleName: 'ElectricVehicle',
-        configuration: BMWData).save()
+        configuration: thinkCityData).save()
 
     // Debug
     electricVehicleService.init()
