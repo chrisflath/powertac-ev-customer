@@ -13,8 +13,8 @@ class ElectricVehicleTimeslot {
   String trip
 
   BigDecimal stateOfCharge // kWh
-  BigDecimal energyDemand // kWh
-  BigDecimal estimatedCost // EUR
+  BigDecimal energyDemand = new BigDecimal(0.0) // kWh
+  BigDecimal estimatedCost = new BigDecimal(0.0) // EUR
 
   static belongsTo = [electricVehicle: ElectricVehicle]
 
