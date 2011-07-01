@@ -196,7 +196,8 @@ class ElectricVehicle extends AbstractCustomer {
       // Also force clearing at the very end
       if ((ts.driving && (possibleChargingTimeslotsList.size() > 0)) || (allTimeslots.size() - 1 == i)) {
         // Load shifting
-        shiftLoad(possibleChargingTimeslotsList)
+        def timeslotBeforeFirstRequiredCharge = ElectricVehicleTimeslot.findById((possibleChargingTimeslotsList.get(0).id - 1))
+        shiftLoad(possibleChargingTimeslotsList, timeslotBeforeFirstRequiredCharge.stateOfCharge)
         // Clean up
         possibleChargingTimeslotsList.clear()
       }
@@ -205,13 +206,11 @@ class ElectricVehicle extends AbstractCustomer {
     printTimeslotsForEvaluation()
   }
 
-  def shiftLoad(List timeslots) {
+  def shiftLoad(List timeslots, BigDecimal lastStateOfCharge) {
     // Get and sort timeslots with energy demand
     def timeslotsWithEnergyDemand = timeslots.findAll { ElectricVehicleTimeslot ts -> ts.energyDemand > 0.0 }
     timeslotsWithEnergyDemand.sort { ElectricVehicleTimeslot ts -> ts.energyDemand }
     Collections.reverse(timeslotsWithEnergyDemand)
-
-    log.debug "found ${timeslotsWithEnergyDemand.size()} slots with demand"
 
     // find corresponding number of cheapest timeslots
     def cheapestTimeslots = timeslots.clone()
@@ -232,17 +231,21 @@ class ElectricVehicle extends AbstractCustomer {
     }
 
     // Finally update all timeslots in selected interval
+    def stateOfCharge = lastStateOfCharge
     timeslots.eachWithIndex { ElectricVehicleTimeslot ts, i ->
       // update if we have saved id before
       if (temporaryDemandMap[ts.id] != null) {
         ts.energyDemand = temporaryDemandMap[ts.id]
         ts.charging = true
         ts.estimatedCost = ts.energyDemand * ts.rate
+        stateOfCharge += ts.energyDemand
+        ts.stateOfCharge = stateOfCharge
       } else {
         // update load appropriately (= reset)
         ts.energyDemand = new BigDecimal(0.0)
         ts.charging = false
         ts.estimatedCost = new BigDecimal(0.0)
+        ts.stateOfCharge = stateOfCharge
       }
 
       // TODO: update SOC here - not really needed since the analysis in complete anyway
