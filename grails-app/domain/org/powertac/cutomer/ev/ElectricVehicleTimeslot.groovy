@@ -15,6 +15,7 @@ class ElectricVehicleTimeslot {
   BigDecimal stateOfCharge // kWh
   BigDecimal energyDemand = new BigDecimal(0.0) // kWh
   BigDecimal estimatedCost = new BigDecimal(0.0) // EUR
+  BigDecimal rate = new BigDecimal(0.0) // EUW/kWh
 
   static belongsTo = [electricVehicle: ElectricVehicle]
 
@@ -29,5 +30,6 @@ class ElectricVehicleTimeslot {
     stateOfCharge(nullable: true, scale: 8)
     energyDemand(nullable: true, scale: 8)
     estimatedCost(nullable: true, scale: 2)
+    rate(nullable: true, scale: 3)
   }
 }

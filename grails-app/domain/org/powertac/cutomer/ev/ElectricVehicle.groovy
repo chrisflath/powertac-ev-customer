@@ -134,16 +134,18 @@ class ElectricVehicle extends AbstractCustomer {
         // finally save soc
         ts.stateOfCharge = stateOfCharge
         ts.energyDemand = consumption
+        ts.charging = (consumption > 0)
 
         // calc costs
         def rate = hourlyRates.get(ts.dateTime.getHourOfDay()) as BigDecimal
+        ts.rate = rate
         ts.estimatedCost = consumption * rate
 
         ts.save()
       }
     }
 
-    printTimeslotsForEvaluation()
+    //printTimeslotsForEvaluation()
   }
 
   // Calculate how much should be loaded (0..1) // g(t)
@@ -170,10 +172,84 @@ class ElectricVehicle extends AbstractCustomer {
     }
   }
 
-  // From the current timeslot onwards, see if we can shift load
   def performSmartCharging() {
+    // use immediate charging first
+    performImmediateCharging()
 
+    // temporary variables
+    def possibleChargingTimeslotsList = []
 
+    // analyze timeslots as follows
+    def allTimeslots = ElectricVehicleTimeslot.getAll()
+    allTimeslots.eachWithIndex { ts, i ->
+      // Find all charging timeslots
+      if (ts.atHome && ts.charging) {
+        possibleChargingTimeslotsList.add(ts)
+      }
+
+      // If we have at least one timeslot to charge, add all following timeslots
+      if (possibleChargingTimeslotsList.size() > 0 && !possibleChargingTimeslotsList.contains(ts)) {
+        possibleChargingTimeslotsList.add(ts)
+      }
+
+      // We previously had found timeslots but are driving now, so we've got out interval
+      // Also force clearing at the very end
+      if ((ts.driving && (possibleChargingTimeslotsList.size() > 0)) || (allTimeslots.size() - 1 == i)) {
+        // Load shifting
+        shiftLoad(possibleChargingTimeslotsList)
+        // Clean up
+        possibleChargingTimeslotsList.clear()
+      }
+    }
+
+    printTimeslotsForEvaluation()
+  }
+
+  def shiftLoad(List timeslots) {
+    // Get and sort timeslots with energy demand
+    def timeslotsWithEnergyDemand = timeslots.findAll { ElectricVehicleTimeslot ts -> ts.energyDemand > 0.0 }
+    timeslotsWithEnergyDemand.sort { ElectricVehicleTimeslot ts -> ts.energyDemand }
+    Collections.reverse(timeslotsWithEnergyDemand)
+
+    log.debug "found ${timeslotsWithEnergyDemand.size()} slots with demand"
+
+    // find corresponding number of cheapest timeslots
+    def cheapestTimeslots = timeslots.clone()
+    cheapestTimeslots.sort { ElectricVehicleTimeslot ts -> ts.rate }
+
+    // Need to store updates temporarily to avoid data inconsistency issues
+    // Format: key = timeslot id / value =  new energy demand
+    def temporaryDemandMap = [:]
+    // Match highest demand with cheapest prices
+    timeslotsWithEnergyDemand.eachWithIndex { ElectricVehicleTimeslot ts, i ->
+      ElectricVehicleTimeslot cheapestTimeslot = cheapestTimeslots.get(i)
+
+      // Skip changes if we already have the cheapest timeslot
+      if (ts.id != cheapestTimeslot.id) {
+        // Save shift volume
+        temporaryDemandMap[cheapestTimeslot.id] = ts.energyDemand
+      }
+    }
+
+    // Finally update all timeslots in selected interval
+    timeslots.eachWithIndex { ElectricVehicleTimeslot ts, i ->
+      // update if we have saved id before
+      if (temporaryDemandMap[ts.id] != null) {
+        ts.energyDemand = temporaryDemandMap[ts.id]
+        ts.charging = true
+        ts.estimatedCost = ts.energyDemand * ts.rate
+      } else {
+        // update load appropriately (= reset)
+        ts.energyDemand = new BigDecimal(0.0)
+        ts.charging = false
+        ts.estimatedCost = new BigDecimal(0.0)
+      }
+
+      // TODO: update SOC here - not really needed since the analysis in complete anyway
+      // The SOC field is inconsistent and probably should not be used anymore
+
+      ts.save()
+    }
   }
 
   def printTimeslotsForEvaluation() {
@@ -195,7 +271,7 @@ class ElectricVehicle extends AbstractCustomer {
         print '\t'
         print ts.estimatedCost
         print '\t'
-        println electricVehicleInitializationService.hourlyRateTariffRates().get(ts.dateTime.getHourOfDay()) as BigDecimal
+        println ts.rate
       }
     }
   }
