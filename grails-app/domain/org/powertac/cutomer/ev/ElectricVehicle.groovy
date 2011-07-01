@@ -118,7 +118,7 @@ class ElectricVehicle extends AbstractCustomer {
       // No need to calc the needed amount for the first timeslot since we assune we're fully charged
       if (i != 0) {
         // g(t)
-        def loadingPercentage = calcLoadingPercentage(ts, allTimeslots.get(i - 1))
+        def loadingPercentage = calcImmediateChargingPercentage(ts, allTimeslots.get(i - 1))
         // SOC(t)
         def capacity = config?.configuration?.capacity_kwh as BigDecimal // C
         def chargingTime = config?.configuration?.requiredChargingHours as BigDecimal // v
@@ -147,7 +147,7 @@ class ElectricVehicle extends AbstractCustomer {
   }
 
   // Calculate how much should be loaded (0..1) // g(t)
-  def calcLoadingPercentage(ElectricVehicleTimeslot currentTimeslot, ElectricVehicleTimeslot previousTimeslot) {
+  def calcImmediateChargingPercentage(ElectricVehicleTimeslot currentTimeslot, ElectricVehicleTimeslot previousTimeslot) {
     // We assume that we can only load at home
     if (currentTimeslot.atHome) {
 
@@ -170,8 +170,9 @@ class ElectricVehicle extends AbstractCustomer {
     }
   }
 
-
+  // From the current timeslot onwards, see if we can shift load
   def performSmartCharging() {
+
 
   }
 
