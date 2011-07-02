@@ -21,8 +21,8 @@ class ElectricVehicleInitializationService implements InitializationService {
     PluginConfig config = new PluginConfig(roleName: 'ElectricVehicle',
         configuration: thinkCityData).save()
 
-    // Debug
-    electricVehicleService.init()
+    // For evaluation - will be called by initialize() when running competition.
+    // electricVehicleService.init()
   }
 
   String initialize(Competition competition, List<String> completedInits) {
@@ -37,15 +37,10 @@ class ElectricVehicleInitializationService implements InitializationService {
     return 'ElectricVehicle'
   }
 
-  def setEvalulationFlatDefaultTariff() {
-
-  }
-
-  def setEvaluationHourlyRateTariff() {
-
-  }
-
-  // List of EUR/kWh prices. Index == hour
+  /*
+  Tariff used for evaluation purposes (List of EUR/kWh prices. List index == hour)
+  The default broker could offer those within the simulation
+   */
   def hourlyRateTariffRates() {
     [0.11, 0.12, 0.07, 0.08, 0.06, 0.1, 0.135, 0.17, 0.2, 0.15, 0.135, 0.15,
         0.22, 0.26, 0.21, 0.135, 0.12, 0.15, 0.215, 0.25, 0.18, 0.16, 0.15, 0.11]

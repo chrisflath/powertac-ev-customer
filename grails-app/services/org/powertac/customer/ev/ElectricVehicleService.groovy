@@ -16,7 +16,7 @@ class ElectricVehicleService {
     // Find and set config
     ev.config = PluginConfig.findByRoleName("ElectricVehicle")
 
-    // Create customer info
+    // Create customer info - population is initially 1
     CustomerInfo info = new CustomerInfo(name: "ElectricVehicle",
         customerType: CustomerType.CustomerElectricVehicle,
         powerTypes: [PowerType.CONSUMPTION]).save()
@@ -33,8 +33,8 @@ class ElectricVehicleService {
 
     // load data
     ev.loadData()
-    //ev.performImmediateCharging()
-    ev.performSmartCharging()
-    ev.printTimeslotsForEvaluation()
+    //ev.performImmediateCharging() // either immediate
+    ev.performSmartCharging()       // or smart charging
+    //ev.printTimeslotsForEvaluation()
   }
 }

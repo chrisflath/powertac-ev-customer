@@ -5,14 +5,15 @@ import org.powertac.common.PluginConfig
 import au.com.bytecode.opencsv.CSVReader
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
-import org.joda.time.Instant
 import org.powertac.common.Competition
+import org.powertac.common.TariffSubscription
 
 class ElectricVehicle extends AbstractCustomer {
 
   PluginConfig config
   // Inject service to get access to tariff rates (for evaluation purposes only)
   def electricVehicleInitializationService
+  def timeService
 
   static hasMany = [timeslots: ElectricVehicleTimeslot]
 
@@ -29,9 +30,9 @@ class ElectricVehicle extends AbstractCustomer {
   // Load the driving profile
   def loadData() {
     DateTime competitionBaseTime
-    //competitionBaseTime = Competition.currentCompetition().simulationBaseTime.toDateTime()
+    competitionBaseTime = Competition.currentCompetition().simulationBaseTime.toDateTime()
     // Assume Mon, 2011/07/04 for evaluation purposes
-    competitionBaseTime = new DateTime(2011, 7, 4, 0, 0, 0, 0, DateTimeZone.UTC)
+    //competitionBaseTime = new DateTime(2011, 7, 4, 0, 0, 0, 0, DateTimeZone.UTC)
 
     // Load generated driving profile
     CSVReader reader = new CSVReader(new FileReader("/Users/ddauer/Desktop/Profiles/Unemployed/Profile9.csv"))
@@ -244,9 +245,6 @@ class ElectricVehicle extends AbstractCustomer {
         ts.stateOfCharge = stateOfCharge
       }
 
-      // TODO: update SOC here - not really needed since the analysis in complete anyway
-      // The SOC field is inconsistent and probably should not be used anymore
-
       ts.save()
     }
   }
@@ -274,5 +272,47 @@ class ElectricVehicle extends AbstractCustomer {
       }
     }
   }
+
+  /*
+  Overriding this is required so we can report our own power consumption
+   */
+
+  @Override
+  void consumePower() {
+    DateTime currentDateTime = timeService.getCurrentDateTime()
+    int day = currentDateTime.getDayOfWeek()
+    int hour = currentDateTime.getHourOfDay()
+
+    // Find corresponding EVTimeslot
+    ElectricVehicleTimeslot evts
+    Boolean found = false
+    ElectricVehicleTimeslot.getAll().each { ts ->
+      if (!found) {
+        DateTime dt = ts.dateTime
+        if (dt.getDayOfWeek() == day && dt.getHourOfDay() == hour) {
+          evts = ts
+          found = true
+        }
+      }
+    }
+
+    if (!found) {
+      log.error "No timeslot found"
+    }
+
+    // There should be only 1 subscription
+    def subscriptionList = subscriptions as List
+    if (subscriptionList.size() == 1) {
+      TariffSubscription sub = subscriptionList.get(0)
+      double power = evts.energyDemand.toDouble()
+      sub.usePower(power)
+      log.info "EV using $power"
+    } else {
+      log.error "More than 1 subscription"
+    }
+
+
+  }
+
 
 }
