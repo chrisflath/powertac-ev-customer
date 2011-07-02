@@ -14,8 +14,9 @@ class ElectricVehicleInitializationService implements InitializationService {
     // At simulator startup
 
     // Car-specific data
-    def BMWData = [capacity_kwh: "35.0", requiredChargingHours: "3.0", batteryEfficiency: "0.93", avgConsumption: "0.14"]
-    def thinkCityData = [capacity_kwh: "28.3", requiredChargingHours: "13.0", batteryEfficiency: "0.93", avgConsumption: "0.16"]
+    def profile = "/Users/ddauer/Desktop/Profiles/Unemployed/Profile9.csv"
+    def BMWData = [capacity_kwh: "35.0", requiredChargingHours: "3.0", batteryEfficiency: "0.93", avgConsumption: "0.14", drivingProfile: profile]
+    def thinkCityData = [capacity_kwh: "28.3", requiredChargingHours: "13.0", batteryEfficiency: "0.93", avgConsumption: "0.16", drivingProfile: profile]
 
     // Create plugin config
     PluginConfig config = new PluginConfig(roleName: 'ElectricVehicle',

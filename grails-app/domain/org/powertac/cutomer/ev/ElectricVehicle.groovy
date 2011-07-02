@@ -35,7 +35,7 @@ class ElectricVehicle extends AbstractCustomer {
     //competitionBaseTime = new DateTime(2011, 7, 4, 0, 0, 0, 0, DateTimeZone.UTC)
 
     // Load generated driving profile
-    CSVReader reader = new CSVReader(new FileReader("/Users/ddauer/Desktop/Profiles/Unemployed/Profile9.csv"))
+    CSVReader reader = new CSVReader(new FileReader(config?.configuration?.drivingProfile))
     String[] nextLine
     String[] previousLine
 
