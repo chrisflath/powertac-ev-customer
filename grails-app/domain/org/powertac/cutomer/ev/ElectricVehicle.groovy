@@ -20,12 +20,6 @@ class ElectricVehicle extends AbstractCustomer {
     config(nullable: false)
   }
 
-  @Override
-  void step() {
-    super.step()
-    log.error "some step here"
-  }
-
   // Load the driving profile
   def loadData() {
     DateTime competitionBaseTime
@@ -301,18 +295,19 @@ class ElectricVehicle extends AbstractCustomer {
 
     // There should be only 1 subscription
     def subscriptionList = subscriptions as List
-    log.error "sub $subscriptionList"
+
     if (subscriptionList.size() == 1) {
       TariffSubscription sub = subscriptionList.get(0)
-      double power = evts.energyDemand.toDouble()
+      double power = evts?.energyDemand?.toDouble()
       sub.usePower(power)
-      log.error "EV using $power"
+      log.info "EV using $power"
     } else {
       log.error "More than 1 subscription"
     }
-
-
   }
 
-
+  @Override
+  def getBootstrapData() {
+    return ["bug":"fix"]
+  }
 }
