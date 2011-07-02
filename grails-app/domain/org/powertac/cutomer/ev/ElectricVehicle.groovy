@@ -13,7 +13,6 @@ class ElectricVehicle extends AbstractCustomer {
   PluginConfig config
   // Inject service to get access to tariff rates (for evaluation purposes only)
   def electricVehicleInitializationService
-  def timeService
 
   static hasMany = [timeslots: ElectricVehicleTimeslot]
 
@@ -302,11 +301,12 @@ class ElectricVehicle extends AbstractCustomer {
 
     // There should be only 1 subscription
     def subscriptionList = subscriptions as List
+    log.error "sub $subscriptionList"
     if (subscriptionList.size() == 1) {
       TariffSubscription sub = subscriptionList.get(0)
       double power = evts.energyDemand.toDouble()
       sub.usePower(power)
-      log.info "EV using $power"
+      log.error "EV using $power"
     } else {
       log.error "More than 1 subscription"
     }
