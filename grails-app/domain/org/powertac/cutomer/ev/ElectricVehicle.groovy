@@ -34,7 +34,7 @@ class ElectricVehicle extends AbstractCustomer {
     competitionBaseTime = new DateTime(2011, 7, 4, 0, 0, 0, 0, DateTimeZone.UTC)
 
     // Load generated driving profile
-    CSVReader reader = new CSVReader(new FileReader("/Users/ddauer/Desktop/Profiles/Employee/Profile0.csv"))
+    CSVReader reader = new CSVReader(new FileReader("/Users/ddauer/Desktop/Profiles/Unemployed/Profile9.csv"))
     String[] nextLine
     String[] previousLine
 
@@ -144,8 +144,6 @@ class ElectricVehicle extends AbstractCustomer {
         ts.save()
       }
     }
-
-    //printTimeslotsForEvaluation()
   }
 
   // Calculate how much should be loaded (0..1) // g(t)
@@ -202,8 +200,6 @@ class ElectricVehicle extends AbstractCustomer {
         possibleChargingTimeslotsList.clear()
       }
     }
-
-    printTimeslotsForEvaluation()
   }
 
   def shiftLoad(List timeslots, BigDecimal lastStateOfCharge) {

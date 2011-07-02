@@ -35,7 +35,6 @@ class ElectricVehicleService {
     ev.loadData()
     //ev.performImmediateCharging()
     ev.performSmartCharging()
-
-    //log.error ElectricVehicle.getAll()
+    ev.printTimeslotsForEvaluation()
   }
 }
