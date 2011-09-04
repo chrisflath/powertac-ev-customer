@@ -3,6 +3,7 @@ package org.powertac.customer.ev
 import org.powertac.common.interfaces.InitializationService
 import org.powertac.common.Competition
 import org.powertac.common.PluginConfig
+import org.powertac.cutomer.ev.ElectricVehicle
 
 class ElectricVehicleInitializationService implements InitializationService {
 
@@ -12,18 +13,8 @@ class ElectricVehicleInitializationService implements InitializationService {
 
   void setDefaults() {
     // At simulator startup
-
-    // Car-specific data
-    def profile = "/Users/ddauer/Desktop/Profiles/Unemployed/Profile9.csv"
-    def BMWData = [capacity_kwh: "35.0", requiredChargingHours: "3.0", batteryEfficiency: "0.93", avgConsumption: "0.14", drivingProfile: profile]
-    def thinkCityData = [capacity_kwh: "28.3", requiredChargingHours: "13.0", batteryEfficiency: "0.93", avgConsumption: "0.16", drivingProfile: profile]
-
-    // Create plugin config
-    PluginConfig config = new PluginConfig(roleName: 'ElectricVehicle',
-        configuration: thinkCityData).save()
-
-    // For evaluation - will be called by initialize() when running competition.
-    // electricVehicleService.init()
+    build("bwm_mini_e", 35.0, 0.14, 0.5, 0.15)
+    build("think_city", 28.3, 0.16, 0.5, 0.15)
   }
 
   String initialize(Competition competition, List<String> completedInits) {
@@ -39,15 +30,29 @@ class ElectricVehicleInitializationService implements InitializationService {
   }
 
   /*
-  Tariff used for evaluation purposes (List of EUR/kWh prices. List index == hour)
-  The default broker could offer those within the simulation
+  Build EV instance
    */
-  def hourlyRateTariffRates() {
-    [0.11, 0.12, 0.07, 0.08, 0.06, 0.1, 0.135, 0.17, 0.2, 0.15, 0.135, 0.15,
-        0.22, 0.26, 0.21, 0.135, 0.12, 0.15, 0.215, 0.25, 0.18, 0.16, 0.15, 0.11]
 
-    // flat tariff
-    //[0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22,
-    //    0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22]
+  ElectricVehicle build(String name, BigDecimal capacity_kwh, BigDecimal avgConsumption_kwh, BigDecimal priceThreshold, BigDecimal socThreshold) {
+
+    ElectricVehicle ev = new ElectricVehicle()
+
+    // Create plugin config aka data that is publicly available
+    PluginConfig config = new PluginConfig(roleName: 'ElectricVehicle', name: name,
+        configuration: ['capacity_kwh': capacity_kwh.toString(),
+            'avgConsumption_kwh': avgConsumption_kwh.toString(),
+            'priceThreshold': priceThreshold.toString(),
+            'socThreshold': socThreshold.toString()])
+
+    config.save()
+    ev.configure(config)
+
+    if (!ev.validate()) {
+      ev.errors.allErrors.each {log.error(it.toString())}
+    }
+
+    ev.save()
+
+    return ev
   }
 }
