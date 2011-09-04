@@ -21,6 +21,9 @@ class ElectricVehicle extends AbstractCustomer {
 
   BigDecimal currentSOC = 35.0
 
+  Integer profileId = 0 // [0..999]
+  Integer profileRowOffset = 0
+
   PluginConfig config
 
   static constraints = {
@@ -115,8 +118,9 @@ class ElectricVehicle extends AbstractCustomer {
     this.config = config
     name = config.name
 
-    capacity_kwh =  getValidConfig(config, 'capacity_kwh', capacity_kwh.toString()).toBigDecimal()
-    avgConsumption_kwh =  getValidConfig(config, 'avgConsumption_kwh', avgConsumption_kwh.toString()).toBigDecimal()
+    profileId = getValidConfig(config, 'profileId', profileId.toString()).toInteger()
+    capacity_kwh = getValidConfig(config, 'capacity_kwh', capacity_kwh.toString()).toBigDecimal()
+    avgConsumption_kwh = getValidConfig(config, 'avgConsumption_kwh', avgConsumption_kwh.toString()).toBigDecimal()
     priceThreshold = getValidConfig(config, 'priceThreshold', priceThreshold.toString()).toBigDecimal()
     socThreshold = getValidConfig(config, 'socThreshold', socThreshold.toString()).toBigDecimal()
 
