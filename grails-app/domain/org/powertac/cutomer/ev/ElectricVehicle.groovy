@@ -12,10 +12,12 @@ import org.powertac.common.enumerations.CustomerType
 import org.powertac.common.CustomerInfo
 import org.joda.time.Instant
 import org.powertac.common.Tariff
+import java.text.NumberFormat
 
 class ElectricVehicle extends AbstractCustomer {
 
   // NOTE: Competition start time should be set to a Monday, 0:00 in Competition.groovy or Web UI!
+  // NOTE: 21.06.2010 is a Monday.
 
   String name
   BigDecimal capacity_kwh = 35.0 // default value if not found in config
@@ -51,7 +53,7 @@ class ElectricVehicle extends AbstractCustomer {
         customerType: CustomerType.CustomerElectricVehicle,
         powerTypes: [PowerType.CONSUMPTION]) // PowerTypes never saved correctly! Workaround in CustomerInfo.
 
-     if (!info.validate()) {
+    if (!info.validate()) {
       info.errors.allErrors.each {log.error(it.toString())}
     }
     info.save()
@@ -92,7 +94,7 @@ class ElectricVehicle extends AbstractCustomer {
 
     // Get current price
     // Assumption: There is only one (default) tariff available
-    List <TariffSubscription> subscriptionList = subscriptions as List
+    List<TariffSubscription> subscriptionList = subscriptions as List
     if (subscriptionList.size() > 1) {
       log.error "there should be only one subscription: ${subscriptionList}"
     }
@@ -103,15 +105,59 @@ class ElectricVehicle extends AbstractCustomer {
     log.error "price is ${price}"
 
     // Determine columns
-    int distanceColumn = profileId*2
+    int distanceColumn = profileId * 2
     int typeColumn = distanceColumn + 1
 
     log.error "check columns ${distanceColumn} and ${typeColumn}"
 
-    // Report power usage
-    // use bigDecimalInstance.toDouble()
-    subscription.usePower(123.123)
+    // Load CSV Data
 
+    // Loading the following each time might be incredibly slow...
+    // Load profiles from /powertac-server/rawProfiles.csv
+    def baseDir = System.properties.getProperty('base.dir')
+    def csvFile = "${baseDir}/rawProfiles.csv"
+    CSVReader reader = new CSVReader(new FileReader(csvFile), (char)59) // 59 = ASCII ';'
+    List<String[]> profiles = reader.readAll()
+
+    BigDecimal profileDistance = new BigDecimal(0.0)
+    String profileType = "HOME"
+
+    log.error "offset begin ${profileRowOffset}"
+
+    4.times {
+      // Load data
+      String[] quarterHour = profiles.get(profileRowOffset++)
+      NumberFormat nf = NumberFormat.getInstance(Locale.GERMAN)
+      Number parsedNumber = nf.parse(quarterHour[distanceColumn])
+      BigDecimal quarterDistance = new BigDecimal(parsedNumber)
+      String quarterType = quarterHour[typeColumn]
+
+      log.error "${profileRowOffset}: distance ${quarterDistance} type ${quarterType}"
+
+      // Verify and aggregate
+      if (quarterDistance > 0) {
+        profileDistance += quarterDistance
+      }
+
+      if (profileType == "DRIVING" && quarterType != "DRIVING") {
+        // Once 15min are set to driving, the whole hour needs to remain driving
+      } else {
+        // Set profile type
+        profileType = quarterType
+      }
+    }
+
+    log.error "offset end ${profileRowOffset}"
+    log.error "driving ${profileDistance} with ${profileType}"
+
+    BigDecimal powerUsage = profileDistance * avgConsumption_kwh
+    log.error "powerUsage ${powerUsage}"
+
+    if (profileType == "HOME" && true) {
+      // Report power usage
+      // use bigDecimalInstance.toDouble()
+      subscription.usePower(123.123)
+    }
 
   }
 
