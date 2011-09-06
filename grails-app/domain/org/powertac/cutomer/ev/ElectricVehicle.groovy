@@ -116,7 +116,7 @@ class ElectricVehicle extends AbstractCustomer {
     // Load profiles from /powertac-server/rawProfiles.csv
     def baseDir = System.properties.getProperty('base.dir')
     def csvFile = "${baseDir}/rawProfiles.csv"
-    CSVReader reader = new CSVReader(new FileReader(csvFile), (char)59) // 59 = ASCII ';'
+    CSVReader reader = new CSVReader(new FileReader(csvFile), (char) 59) // 59 = ASCII ';'
     List<String[]> profiles = reader.readAll()
 
     BigDecimal profileDistance = new BigDecimal(0.0)
@@ -153,10 +153,17 @@ class ElectricVehicle extends AbstractCustomer {
     BigDecimal powerUsage = profileDistance * avgConsumption_kwh
     log.error "powerUsage ${powerUsage}"
 
-    if (profileType == "HOME" && true) {
+    if (profileType == "DRIVING") {
+      // update soc
+      currentSOC -= powerUsage
+      // Maybe make sure that SOC > 0
+    }
+
+    if (profileType == "HOME" && powerUsage > 0) {
+      // decide here
+      // ...
       // Report power usage
-      // use bigDecimalInstance.toDouble()
-      subscription.usePower(123.123)
+      subscription.usePower(powerUsage.toDouble())
     }
 
   }
