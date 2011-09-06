@@ -15,6 +15,7 @@ import org.powertac.common.Tariff
 import java.text.NumberFormat
 import org.powertac.common.msg.CustomerReport
 import java.math.RoundingMode
+import org.powertac.common.interfaces.TariffMarket
 
 class ElectricVehicle extends AbstractCustomer {
 
@@ -35,6 +36,7 @@ class ElectricVehicle extends AbstractCustomer {
 
   PluginConfig config
   def visualizationProxyService
+  def tariffMarketService
   static constraints = {
     config(nullable: false)
   }
@@ -50,7 +52,7 @@ class ElectricVehicle extends AbstractCustomer {
     socThreshold = getValidConfig(config, 'socThreshold', socThreshold.toString()).toBigDecimal()
     maxChargingSpeedPerHour = getValidConfig(config, 'maxChargingSpeedPerHour', maxChargingSpeedPerHour.toString()).toBigDecimal()
 
-    currentSOC = capacity_kwh*0.75 // Initial SOC = full
+    currentSOC = capacity_kwh*1 // Initial SOC = full
 
     // Every customer needs to have a customer info
     CustomerInfo info = new CustomerInfo(name: name,
@@ -106,7 +108,7 @@ class ElectricVehicle extends AbstractCustomer {
     Tariff tariff = subscription.tariff
     double price = tariff.getUsageCharge(now)
 
-    log.error "price is ${price}"
+//    log.error "price is ${price}"
 
     // Determine columns
     int distanceColumn = profileId * 2
@@ -135,6 +137,10 @@ class ElectricVehicle extends AbstractCustomer {
       Number parsedNumber = nf.parse(quarterHour[distanceColumn])
       BigDecimal quarterDistance = new BigDecimal(parsedNumber)
       String quarterType = quarterHour[typeColumn]
+      if(profileRowOffset>= 672)
+      {
+          profileRowOffset = 0
+      }
 
 //      log.error "${profileRowOffset}: distance ${quarterDistance} type ${quarterType}"
 
@@ -172,14 +178,14 @@ class ElectricVehicle extends AbstractCustomer {
         chargeAmount.setScale(2, RoundingMode.HALF_EVEN)
         subscription.usePower(chargeAmount.toDouble())
         currentSOC += chargeAmount
-        log.error("charged ${chargeAmount} at price ${price}")
+        //log.error("charged ${chargeAmount} at price ${price}")
         CustomerReport msg = new CustomerReport(name: this.customerInfo.name, powerUsage: new BigDecimal(chargeAmount))
         msg.save()
         visualizationProxyService.forwardMessage(msg)
       }
 
     } else {
-      log.error("no charging soc is ${currentSOC}")
+      //log.error("no charging soc is ${currentSOC}")
       CustomerReport msg = new CustomerReport(name: this.customerInfo.name, powerUsage: new BigDecimal(0.0))
       msg.save()
       visualizationProxyService.forwardMessage(msg)

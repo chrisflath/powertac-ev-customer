@@ -32,8 +32,19 @@ class ElectricVehicleInitializationService implements InitializationService {
 //    log.error "saved ${profileStore}"
 
     // create evs
-    build(0, "bwm_mini_e", 35.0, 0.14, 0.15, 16.0, 5.5)
-    build(1, "think_city", 28.3, 0.16, 0.15, 15.0, 5.5)
+    for ( i in 0..19 )
+    {
+        BigDecimal priceThreshold = Math.random()*0.1+0.08
+        BigDecimal socThreshold = Math.random()*0.2 + 0.4
+        if (i%2==0)
+        {
+            build(i, "bwm_mini_e ${i}", 35.0, 0.14, priceThreshold, 16.0*socThreshold, 5.5)
+        }
+        else
+        {
+            build(i, "think_city ${i}", 28.3, 0.16, priceThreshold, 15.0*socThreshold, 5.5)
+        }
+    }
   }
 
   String initialize(Competition competition, List<String> completedInits) {
