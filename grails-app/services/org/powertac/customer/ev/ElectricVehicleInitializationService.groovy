@@ -32,8 +32,8 @@ class ElectricVehicleInitializationService implements InitializationService {
 //    log.error "saved ${profileStore}"
 
     // create evs
-    build(0, "bwm_mini_e", 35.0, 0.14, 0.5, 0.15)
-    build(1, "think_city", 28.3, 0.16, 0.5, 0.15)
+    build(0, "bwm_mini_e", 35.0, 0.14, 0.15, 16.0, 5.5)
+    build(1, "think_city", 28.3, 0.16, 0.15, 15.0, 5.5)
   }
 
   String initialize(Competition competition, List<String> completedInits) {
@@ -52,7 +52,7 @@ class ElectricVehicleInitializationService implements InitializationService {
   Build EV instance
    */
 
-  ElectricVehicle build(Integer profileId, String name, BigDecimal capacity_kwh, BigDecimal avgConsumption_kwh, BigDecimal priceThreshold, BigDecimal socThreshold) {
+  ElectricVehicle build(Integer profileId, String name, BigDecimal capacity_kwh, BigDecimal avgConsumption_kwh, BigDecimal priceThreshold, BigDecimal socThreshold, BigDecimal maxChargingSpeedPerHour) {
 
     ElectricVehicle ev = new ElectricVehicle()
 
@@ -62,7 +62,8 @@ class ElectricVehicleInitializationService implements InitializationService {
             'capacity_kwh': capacity_kwh.toString(),
             'avgConsumption_kwh': avgConsumption_kwh.toString(),
             'priceThreshold': priceThreshold.toString(),
-            'socThreshold': socThreshold.toString()])
+            'socThreshold': socThreshold.toString(),
+            'maxChargingSpeedPerHour': maxChargingSpeedPerHour.toString()])
 
     config.save()
     ev.configure(config)

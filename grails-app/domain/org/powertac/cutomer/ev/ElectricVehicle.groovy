@@ -13,6 +13,8 @@ import org.powertac.common.CustomerInfo
 import org.joda.time.Instant
 import org.powertac.common.Tariff
 import java.text.NumberFormat
+import org.powertac.common.msg.CustomerReport
+import java.math.RoundingMode
 
 class ElectricVehicle extends AbstractCustomer {
 
@@ -24,6 +26,7 @@ class ElectricVehicle extends AbstractCustomer {
   BigDecimal avgConsumption_kwh = 14.0 // default value if not found in config
   BigDecimal priceThreshold = 0.5 // default value if not found in config
   BigDecimal socThreshold = 0.5 // default value if not found in config
+  BigDecimal maxChargingSpeedPerHour = 11.0 // default value if not found in config
 
   BigDecimal currentSOC = 35.0
 
@@ -31,7 +34,7 @@ class ElectricVehicle extends AbstractCustomer {
   Integer profileRowOffset = 0
 
   PluginConfig config
-
+  def visualizationProxyService
   static constraints = {
     config(nullable: false)
   }
@@ -45,8 +48,9 @@ class ElectricVehicle extends AbstractCustomer {
     avgConsumption_kwh = getValidConfig(config, 'avgConsumption_kwh', avgConsumption_kwh.toString()).toBigDecimal()
     priceThreshold = getValidConfig(config, 'priceThreshold', priceThreshold.toString()).toBigDecimal()
     socThreshold = getValidConfig(config, 'socThreshold', socThreshold.toString()).toBigDecimal()
+    maxChargingSpeedPerHour = getValidConfig(config, 'maxChargingSpeedPerHour', maxChargingSpeedPerHour.toString()).toBigDecimal()
 
-    currentSOC = capacity_kwh // Initial SOC = full
+    currentSOC = capacity_kwh*0.75 // Initial SOC = full
 
     // Every customer needs to have a customer info
     CustomerInfo info = new CustomerInfo(name: name,
@@ -80,9 +84,9 @@ class ElectricVehicle extends AbstractCustomer {
 
   @Override
   void step() {
-    log.error "step() begin - ${toString()}, timeslot: ${timeService.currentTime}"
+//    log.error "step() begin - ${toString()}, timeslot: ${timeService.currentTime}"
     consumePower()
-    log.error "step() end - ${toString()}, timeslot: ${timeService.currentTime}"
+//    log.error "step() end - ${toString()}, timeslot: ${timeService.currentTime}"
   }
 
   @Override
@@ -108,7 +112,7 @@ class ElectricVehicle extends AbstractCustomer {
     int distanceColumn = profileId * 2
     int typeColumn = distanceColumn + 1
 
-    log.error "check columns ${distanceColumn} and ${typeColumn}"
+//    log.error "check columns ${distanceColumn} and ${typeColumn}"
 
     // Load CSV Data
 
@@ -122,7 +126,7 @@ class ElectricVehicle extends AbstractCustomer {
     BigDecimal profileDistance = new BigDecimal(0.0)
     String profileType = "HOME"
 
-    log.error "offset begin ${profileRowOffset}"
+    //log.error "offset begin ${profileRowOffset}"
 
     4.times {
       // Load data
@@ -132,7 +136,7 @@ class ElectricVehicle extends AbstractCustomer {
       BigDecimal quarterDistance = new BigDecimal(parsedNumber)
       String quarterType = quarterHour[typeColumn]
 
-      log.error "${profileRowOffset}: distance ${quarterDistance} type ${quarterType}"
+//      log.error "${profileRowOffset}: distance ${quarterDistance} type ${quarterType}"
 
       // Verify and aggregate
       if (quarterDistance > 0) {
@@ -147,23 +151,38 @@ class ElectricVehicle extends AbstractCustomer {
       }
     }
 
-    log.error "offset end ${profileRowOffset}"
-    log.error "driving ${profileDistance} with ${profileType}"
+//    log.error "offset end ${profileRowOffset}"
+    //    log.error "driving ${profileDistance} with ${profileType}"
 
     BigDecimal powerUsage = profileDistance * avgConsumption_kwh
-    log.error "powerUsage ${powerUsage}"
+    powerUsage.setScale(2, RoundingMode.HALF_EVEN)
+
+//    log.error "powerUsage ${powerUsage}"
 
     if (profileType == "DRIVING") {
       // update soc
       currentSOC -= powerUsage
-      // Maybe make sure that SOC > 0
+      currentSOC.setScale(2, RoundingMode.HALF_EVEN)
+      //TODO: Maybe make sure that SOC > 0
     }
 
-    if (profileType == "HOME" && powerUsage > 0) {
-      // decide here
-      // ...
-      // Report power usage
-      subscription.usePower(powerUsage.toDouble())
+    if (profileType == "HOME" && currentSOC < capacity_kwh) {
+      if (currentSOC < socThreshold || price < priceThreshold) {
+        def chargeAmount = new BigDecimal(Math.min(maxChargingSpeedPerHour, capacity_kwh - currentSOC))
+        chargeAmount.setScale(2, RoundingMode.HALF_EVEN)
+        subscription.usePower(chargeAmount.toDouble())
+        currentSOC += chargeAmount
+        log.error("charged ${chargeAmount} at price ${price}")
+        CustomerReport msg = new CustomerReport(name: this.customerInfo.name, powerUsage: new BigDecimal(chargeAmount))
+        msg.save()
+        visualizationProxyService.forwardMessage(msg)
+      }
+
+    } else {
+      log.error("no charging soc is ${currentSOC}")
+      CustomerReport msg = new CustomerReport(name: this.customerInfo.name, powerUsage: new BigDecimal(0.0))
+      msg.save()
+      visualizationProxyService.forwardMessage(msg)
     }
 
   }
